@@ -158,8 +158,8 @@ The real `.env` file is excluded from Git and should never be committed.
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_REPOSITORY_URL
-cd YOUR_REPOSITORY_NAME
+git clone https://github.com/Hadicse2007/fastapi-lead-intake-api.git
+cd fastapi-lead-intake-api
 ```
 
 ### 2. Install dependencies
