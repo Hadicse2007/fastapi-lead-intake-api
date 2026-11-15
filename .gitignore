@@ -3,3 +3,7 @@ __pycache__/
 .pytest_cache/
 *.pyc
 .vscode/
+.venv/
+flowchart/
+# Generated AI qualification results
+lead_qualification_results.csv
