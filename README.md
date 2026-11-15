@@ -1,143 +1,169 @@
-# AI-Enhanced FastAPI Lead Intake & Qualification System
+# FastAPI Lead Intake & AI Lead Qualification System
 
-A Python-based backend and AI integration project built with **FastAPI, Pydantic, and OpenAI**.
+A Python project that combines a protected FastAPI lead intake endpoint with a separate AI-powered lead qualification workflow.
 
-This project demonstrates secure lead intake through a REST API, automated data validation, API-key authentication, external API communication, retry and error handling, and AI-powered lead qualification using OpenAI Structured Outputs.
+The project focuses on validating incoming lead data, handling API requests reliably, classifying customer inquiries with structured AI output, and exporting qualification results to CSV.
 
-The system is being developed through a hands-on, milestone-based approach, with a focus on practical backend engineering and real-world AI automation applications.
+It was built as a practical project to explore API development, OpenAI integration, data validation, error handling, and automated testing.
 
-**Project Status:** Active Development — Week 4
-
----
-
-## 1. Project Overview
-
-Businesses receive customer inquiries through websites, contact forms, and other channels. Manually reviewing these inquiries, identifying customer requirements, and determining their urgency can be time-consuming.
-
-This project explores how backend APIs and AI can help streamline the lead management process.
-
-The current implementation consists of two independent components:
-
-**1. FastAPI Lead Intake API**
-
-Receives lead information, validates incoming data, authenticates requests using an API key, retrieves demonstration company information from an external API, and handles upstream failures.
-
-**2. AI-Powered Lead Qualification Module**
-
-Uses OpenAI's Responses API and Pydantic Structured Outputs to analyze customer messages and classify their service requirements, urgency, and human review needs.
-
-The AI qualification module currently runs independently of the FastAPI application. Connecting both components into a unified lead automation workflow is part of the upcoming development roadmap.
-
----
-
-## 2. Key Features
+## Features
 
 ### FastAPI Lead Intake
 
-- REST API development using FastAPI.
-- Incoming lead validation using Pydantic.
-- Email validation using `EmailStr`.
-- API-key authentication through the `X-API-Key` request header.
-- Unique request ID generation using UUID.
-- External API integration.
-- Request timeout protection.
-- Retry handling for upstream HTTP 5xx errors and request timeouts.
-- Controlled HTTP error responses.
-- Structured application logging.
+- REST API built with FastAPI
+- Request validation using Pydantic
+- Email validation with `EmailStr`
+- API-key authentication using `X-API-Key`
+- Unique request IDs for tracking
+- External API integration for demo company information
+- Request timeouts and retry handling
+- Controlled HTTP error responses
+- Application logging
 
-### AI-Powered Lead Qualification
+### AI Lead Qualification
 
-- OpenAI API integration using the official Python SDK.
-- AI-based analysis of customer messages.
-- Structured JSON generation using OpenAI Responses API.
-- Pydantic-based structured output validation.
-- Service interest classification.
-- Lead urgency classification.
-- AI-generated classification reasoning.
-- Human review flag for unclear or insufficient information.
+- Single lead qualification using the OpenAI Responses API
+- Batch qualification for multiple leads
+- Structured AI output using Pydantic models
+- Service interest classification
+- Urgency classification
+- Explanation of classification decisions
+- Human review flag for uncertain leads
+- Input validation before API requests
+- Duplicate lead ID protection
+- Verification of AI-returned lead IDs
 
-### Testing and Reliability
+### CSV Export
 
-- Automated testing using Pytest.
-- FastAPI endpoint testing.
-- Authentication testing.
-- Invalid input testing.
-- Pydantic schema validation testing.
-- Upstream timeout and HTTP 500 retry testing.
-- Mock-based testing to avoid unnecessary external API requests.
+- Export batch qualification results to CSV
+- UTF-8 BOM encoding for spreadsheet compatibility
+- Preservation of Unicode text
+- Formula injection mitigation for untrusted text fields
+
+### Reliability and Testing
+
+- OpenAI API timeout and retry configuration
+- Handling of authentication, rate-limit, connection, and server errors
+- Structured JSON logging
+- Request ID and execution-time tracking
+- Automated tests using pytest
+- Mocked API responses for repeatable testing
 
 ---
 
-## 3. Technology Stack
+## Technology Stack
 
 | Technology | Purpose |
 |---|---|
-| Python | Core programming language |
+| Python 3.14.6 | Main programming language |
 | FastAPI | REST API development |
-| Pydantic | Data validation and structured schemas |
+| Pydantic | Data validation and structured output |
 | OpenAI Python SDK | AI integration |
-| OpenAI Responses API | Structured AI responses |
-| python-dotenv | Environment variable management |
+| OpenAI Responses API | Lead qualification |
 | Requests | External HTTP requests |
 | Uvicorn | ASGI application server |
-| Pytest | Automated testing |
-| HTTPX | API testing support |
-| Git & GitHub | Version control and project hosting |
+| python-dotenv | Environment configuration |
+| pytest | Automated testing |
+| httpx2 | HTTP client support for tests and SDK dependencies |
+
+## Project Structure
+
+```text
+API/
+│
+├── main.py
+├── test_main.py
+│
+├── lead_schemas.py
+├── qualify_lead.py
+├── run_batch_qualification.py
+├── export_leads.py
+│
+├── check_openai_connection.py
+│
+├── test_lead_schemas.py
+├── test_qualify_leads.py
+├── test_export_leads.py
+│
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+## System Overview
+
+The project currently contains two related but separate workflows.
+
+### 1. FastAPI Lead Intake Workflow
+
+```text
+Client
+  |
+  v
+POST /leads
+  |
+  v
+Pydantic Validation
+  |
+  v
+API Key Authentication
+  |
+  v
+External Demo API Request
+  |
+  v
+Company Information
+  |
+  v
+Structured API Response
+```
+
+The API validates incoming lead information, verifies the client's API key, and performs a read-only lookup against a public demo API.
+
+### 2. AI Lead Qualification Workflow
+
+```text
+Customer Lead Messages
+          |
+          v
+    Input Validation
+          |
+          v
+    Batch Preparation
+          |
+          v
+    OpenAI Responses API
+          |
+          v
+  Structured AI Output
+          |
+          v
+    Pydantic Validation
+          |
+          v
+       CSV Export
+```
+
+The AI workflow accepts lead messages, classifies them, validates the returned structure, and optionally exports the results to CSV.
+
+The AI qualification workflow is currently implemented separately from the FastAPI `/leads` endpoint.
 
 ---
 
-## 4. System Architecture
+## FastAPI Lead Intake API
 
-The current implementation contains two separate execution paths.
-
-### A. FastAPI Lead Intake Workflow
-
-```mermaid
-flowchart TD
-    A[Client Request] --> B[FastAPI Application]
-    B --> C[Pydantic Request Validation]
-    C -->|Invalid| D[422 Validation Error]
-    C -->|Valid| E[Create Request ID]
-    E --> F[API Key Authentication]
-    F -->|Invalid| G[401 Unauthorized]
-    F -->|Valid| H[get_mock_company_info]
-    H --> I[JSONPlaceholder API]
-    I --> J[Timeout and 5xx Retry Handling]
-    J --> K[Prepare Lead Response]
-    K --> L[200 OK]
-```
-
-### B. AI Lead Qualification Workflow
-
-```mermaid
-flowchart TD
-    A[Customer Lead Message] --> B[Python Qualification Module]
-    B --> C[OpenAI Responses API]
-    C --> D[AI Message Analysis]
-    D --> E[Pydantic Structured Output]
-    E --> F[Validated Python Object]
-    F --> G[Structured JSON Result]
-```
-
-**Architecture Note:** The FastAPI and AI qualification workflows are currently separate. End-to-end integration is planned for a future development milestone.
-
----
-
-## 5. FastAPI Lead Intake API
-
-The FastAPI application provides two endpoints.
+The FastAPI application is defined in `main.py`.
 
 ### Health Check
 
-**Endpoint:**
+**Endpoint**
 
 ```http
 GET /health
 ```
 
-Purpose:
-
-Checks whether the API application is running.
+Checks whether the API is running.
 
 Example response:
 
@@ -147,23 +173,23 @@ Example response:
 }
 ```
 
-This endpoint does not require API-key authentication.
-
 ### Create Lead
 
-**Endpoint:**
+**Endpoint**
 
 ```http
 POST /leads
 ```
 
-Required request header:
+This endpoint receives a new lead and requires API-key authentication.
 
-```text
+**Required Header**
+
+```http
 X-API-Key: your-api-key
 ```
 
-Example request body:
+**Example Request**
 
 ```json
 {
@@ -175,21 +201,25 @@ Example request body:
 }
 ```
 
+The `phone` field is optional.
+
 ### Lead Data Model
 
-The application uses a Pydantic model named `Lead`.
+The incoming lead is validated using a Pydantic model.
 
-| Field | Data Type | Requirement |
+| Field | Type | Required |
 |---|---|---|
-| `event_id` | String | Required |
-| `name` | String | Required |
-| `email` | EmailStr | Required, valid email |
-| `phone` | String or None | Optional |
-| `message` | String | Required |
+| event_id | string | Yes |
+| name | string | Yes |
+| email | EmailStr | Yes |
+| phone | string or null | No |
+| message | string | Yes |
 
-FastAPI automatically validates incoming request bodies using this model.
+### Successful Response
 
-### Successful Response Example
+The API returns the received lead, a unique request ID, and the company information obtained from the demo upstream service.
+
+Example structure:
 
 ```json
 {
@@ -206,144 +236,101 @@ FastAPI automatically validates incoming request bodies using this model.
     "id": 1,
     "name": "Demo Company",
     "email": "demo@example.com",
-    "phone": "123456"
+    "phone": "000-000-0000"
   }
 }
 ```
 
-The company information above is illustrative. The actual values are retrieved from the external demonstration API.
+The company information above is illustrative; actual values come from the upstream demo API.
 
----
+## Authentication and Error Handling
 
-## 6. Authentication and Request Validation
+The `/leads` endpoint uses a shared API key supplied through the `X-API-Key` request header.
 
-The `/leads` endpoint uses API-key authentication through the `X-API-Key` header.
+The server compares the supplied key with the configured `API_KEY`.
 
-The request processing sequence is:
+| Scenario | HTTP Status |
+|---|---:|
+| Successful request | 200 |
+| Missing required field | 422 |
+| Invalid email | 422 |
+| Missing API key | 401 |
+| Invalid API key | 401 |
+| Upstream timeout after retries | 504 |
+| Upstream service failure | 502 |
 
-1. FastAPI receives the request.
-2. Pydantic validates the incoming request body.
-3. The application generates a unique request ID.
-4. The supplied API key is compared with the configured server API key.
-5. Unauthorized requests are rejected.
-6. Authenticated requests proceed to external API communication.
-7. The application prepares and returns the final response.
+## External API Integration
 
-### Authentication Behavior
-
-- Missing API key: HTTP 401.
-- Incorrect API key: HTTP 401.
-- Valid API key: Request processing continues.
-
-**Note:** FastAPI request validation happens before the endpoint function executes. Therefore, an invalid request body can return HTTP 422 before API-key authentication is evaluated.
-
----
-
-## 7. External API Integration and Retry Handling
-
-The application retrieves demonstration company information from the JSONPlaceholder API.
-
-**External API endpoint:**
+The FastAPI application uses the following public demo endpoint:
 
 ```text
 https://jsonplaceholder.typicode.com/users/1
 ```
 
-The current implementation uses:
+This integration demonstrates how an application can retrieve information from an external service.
 
-| Configuration | Value |
-|---|---|
-| Request method | GET |
-| Request timeout | 5 seconds |
-| Maximum attempts | 3 |
-| Retry on timeout | Yes |
-| Retry on HTTP 5xx | Yes |
-| Retry on other request errors | No |
+The request uses:
 
-### Retry Behavior
+- A 5-second timeout
+- Up to three attempts for selected transient failures
+- Controlled error responses after unsuccessful attempts
 
-**Upstream HTTP 5xx errors**
+The upstream request is read-only, so retrying does not create duplicate write operations.
 
-The application retries the request up to three total attempts. If all attempts fail, it returns HTTP 502.
-
-**Request Timeout**
-
-The application retries up to three total attempts. If all attempts time out, it returns HTTP 504.
-
-**Other Request Exceptions**
-
-Other Requests library exceptions are logged and handled with HTTP 502 without additional retries.
-
-**Important:** The current retry implementation does not include exponential backoff or delay between attempts.
-
-The external API is used for demonstration purposes. It always requests a predefined demo user and does not perform real company enrichment based on the submitted lead information.
+This is demo company information, not a real CRM or customer enrichment integration.
 
 ---
 
-## 8. Error Handling
+## AI-Powered Lead Qualification
 
-The application returns controlled HTTP responses for common failure scenarios.
+The AI functionality is implemented in `qualify_lead.py`.
 
-| Scenario | HTTP Status | Description |
-|---|---:|---|
-| Successful health check | 200 | API is running |
-| Successful lead submission | 200 | Lead accepted |
-| Missing or invalid API key | 401 | Authentication failed |
-| Invalid request body | 422 | Pydantic validation failed |
-| Upstream service failure | 502 | External request failed |
-| Upstream timeout after retries | 504 | External service did not respond |
+It uses the OpenAI Responses API with structured output parsing.
 
-The application also records relevant events through Python's logging module.
+### Single Lead Qualification
 
----
+The `qualify_lead()` function accepts one customer message.
 
-## 9. AI-Powered Lead Qualification
+Example:
 
-The AI module analyzes customer messages and returns structured lead qualification data.
+```python
+from qualify_lead import qualify_lead
 
-It uses:
+message = """
+I need an AI automation system to manage
+my increasing customer inquiries.
 
-- OpenAI's official Python SDK.
-- OpenAI Responses API.
-- `client.responses.parse()`.
-- Pydantic Structured Outputs.
-- A custom `LeadQualification` model.
+This is urgent.
+"""
+
+result = qualify_lead(message)
+
+print(result.model_dump_json(indent=2))
+```
+
+The function validates the input before making an API request.
+
+Empty messages, whitespace-only messages, and invalid input types are rejected.
 
 ### Lead Qualification Schema
 
-The Pydantic model defines four required fields.
+The output is validated using the `LeadQualification` Pydantic model.
 
-| Field | Type | Purpose |
-|---|---|---|
-| `service_interest` | Literal | Identifies the requested service |
-| `urgency` | Literal | Classifies lead urgency |
-| `reason` | String | Explains the classification |
-| `needs_review` | Boolean | Indicates whether human review is needed |
+| Field | Allowed Values / Type |
+|---|---|
+| service_interest | Literal category |
+| urgency | low, medium, high |
+| reason | string |
+| needs_review | boolean |
 
-### Allowed Service Categories
+**Service Categories**
 
 - `marketing_automation`
 - `crm_integration`
 - `lead_generation`
 - `other`
 
-### Allowed Urgency Levels
-
-- `low`
-- `medium`
-- `high`
-
-The schema uses `ConfigDict(extra="forbid")` to reject additional fields that are not part of the defined qualification structure.
-
-### Example Input
-
-```text
-I run a marketing agency and need an AI
-automation system to manage my leads.
-
-This is urgent because we are receiving
-too many customer inquiries.
-```
+The `needs_review` field indicates whether the result should be checked by a human.
 
 ### Example AI Output
 
@@ -351,68 +338,143 @@ too many customer inquiries.
 {
   "service_interest": "marketing_automation",
   "urgency": "high",
-  "reason": "The lead needs an AI automation system to manage leads and explicitly describes the requirement as urgent.",
+  "reason": "The lead urgently needs automation to manage increasing customer inquiries.",
   "needs_review": false
 }
 ```
 
-### Human Review Support
-
-The `needs_review` field allows the AI module to flag unclear or insufficient lead messages for potential human review.
-
-It is currently a classification flag, not a fully implemented human approval workflow.
-
-**Important:** Structured Outputs enforce the response format and schema, but do not guarantee that every AI-generated classification is factually correct. Additional evaluation and human oversight are necessary for reliable business use.
+The result is an AI-generated classification and should not be treated as a guaranteed business decision.
 
 ---
 
-## 10. Project Structure
+## Batch Lead Qualification
 
-```text
-API/
-│
-├── main.py
-│   └── Main FastAPI application
-│
-├── test_main.py
-│   └── FastAPI endpoint and integration tests
-│
-├── lead_schemas.py
-│   └── Pydantic AI qualification schema
-│
-├── qualify_lead.py
-│   └── OpenAI-powered lead qualification module
-│
-├── check_openai_connection.py
-│   └── OpenAI API connection verification
-│
-├── test_lead_schemas.py
-│   └── Pydantic schema validation tests
-│
-├── requirements.txt
-│   └── Project dependencies
-│
-├── .env.example
-│   └── Environment variable template
-│
-├── .gitignore
-│   └── Git exclusion rules
-│
-└── README.md
-    └── Project documentation
+The `qualify_multiple_leads()` function processes multiple lead messages in one OpenAI Responses API request.
+
+Each input lead must contain:
+
+```json
+{
+  "lead_id": "L001",
+  "message": "I urgently need marketing automation."
+}
 ```
 
-The actual `.env` file and `.venv` directory are maintained locally and excluded from version control.
+### Batch Validation
 
-Personal learning diagrams and flowcharts are also maintained locally and are not included in the public repository.
+Before sending the request, the application checks:
+
+- The input list is not empty.
+- Every lead is a dictionary.
+- Every lead has a valid, non-empty ID.
+- Every message is a non-empty string.
+- Duplicate lead IDs are rejected.
+
+The returned AI results are checked to ensure that every input lead ID is represented exactly once.
+
+The batch output uses the `LeadQualificationBatch` Pydantic model.
+
+The batch implementation uses a regular Responses API request containing multiple leads. It is not the separate OpenAI Batch API.
+
+### Run the Batch Demo
+
+```powershell
+python run_batch_qualification.py
+```
+
+The demonstration uses three sample leads with different service interests and urgency levels.
 
 ---
 
-## 11. Environment Variables and Security
+## CSV Export
 
-The project uses environment variables to manage sensitive configuration values.
+The `export_leads.py` module exports validated batch results.
 
-Create a local `.env` file in the project root.
+**Default output file:**
+
+```text
+lead_qualification_results.csv
+```
+
+The CSV contains:
+
+| Column | Description |
+|---|---|
+| lead_id | Original lead identifier |
+| service_interest | Classified service |
+| urgency | Classified urgency |
+| reason | Explanation |
+| needs_review | Human review indicator |
+
+The exporter uses UTF-8 with BOM encoding to improve compatibility with spreadsheet applications.
+
+It also applies formula-injection mitigation to untrusted text fields, including lead IDs and qualification reasons.
+
+This is a defensive measure, not a guarantee against every spreadsheet-specific interpretation.
+
+Generated CSV files are excluded from Git through `.gitignore`.
+
+---
+
+## OpenAI API Configuration
+
+The AI qualification module uses the official OpenAI Python SDK.
+
+The client is configured with:
+
+- A 30-second request timeout
+- Up to two SDK retries
+- Structured output parsing
+- Error handling for common API failures
+
+The current model is configured in `qualify_lead.py`.
+
+### OpenAI Error Handling
+
+The application handles:
+
+- API timeout
+- Rate-limit errors
+- Authentication errors
+- Connection errors
+- HTTP status errors
+- Other API errors
+
+When a request fails, the application logs the error category and execution time without logging the customer message or API key.
+
+## Structured Logging
+
+The AI qualification module uses Python's `logging` module.
+
+It records:
+
+- Request started
+- Request completed
+- Request failed
+- Unique request ID
+- Error category
+- Execution duration in milliseconds
+
+Example successful event:
+
+```json
+{
+  "event": "openai_request_completed",
+  "request_id": "generated-uuid",
+  "status": "success",
+  "duration_ms": 1250
+}
+```
+
+The request ID is generated by the application for internal tracking.
+
+---
+
+## Environment Variables and Security
+
+The project uses environment variables for configuration.
+
+Create a local `.env` file using `.env.example` as a template.
 
 Example:
 
@@ -421,101 +483,94 @@ API_KEY=your-secret-api-key
 OPENAI_API_KEY=your-openai-api-key
 ```
 
-### Environment Variable Usage
-
-| Variable | Used By | Purpose |
-|---|---|---|
-| `API_KEY` | FastAPI application | Lead endpoint authentication |
-| `OPENAI_API_KEY` | OpenAI integration scripts | OpenAI API authentication |
-
 ### Security Practices
 
-- Never commit the actual `.env` file.
-- Never hardcode OpenAI API keys in source code.
-- Never expose API credentials in public repositories.
-- Use `.env.example` with placeholder values.
-- Keep the `.venv` directory excluded from Git.
-- Store API credentials securely.
+- API keys are stored in environment variables.
+- The real `.env` file is excluded from Git.
+- `.venv` is excluded from Git.
+- API endpoints validate incoming data.
+- The lead intake endpoint requires API-key authentication.
+- AI requests use controlled error handling.
+- Customer messages and API keys are not included in AI request logs.
+- CSV export applies formula-injection mitigation.
 
-The current API-key authentication is a basic shared-secret implementation. Production deployment will require additional security measures such as HTTPS, credential rotation, rate limiting, and more robust access controls.
+Never commit real API keys or other secrets to the repository.
 
 ---
 
-## 12. Installation and Setup
+## Installation and Setup
 
-### Prerequisites
+### Requirements
 
-- Python installed.
-- Git installed.
-- An OpenAI API account for live AI functionality.
-- An active OpenAI API key with sufficient API credit.
+- Python 3.14.6 (the version used for project verification)
+- pip
+- An OpenAI API key for AI features
 
-### Step 1: Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Hadicse2007/fastapi-lead-intake-api.git
-```
 
-Navigate to the project directory:
-
-```bash
 cd fastapi-lead-intake-api
 ```
 
-### Step 2: Create a Virtual Environment
+### 2. Create a Virtual Environment
 
-```bash
-python -m venv .venv
-```
-
-### Step 3: Install Dependencies
-
-**Windows PowerShell:**
+**Windows PowerShell**
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+py -3.14 -m venv .venv
+
+.\.venv\Scripts\Activate.ps1
 ```
 
-**macOS/Linux:**
+If PowerShell blocks script execution, use a temporary process-level policy:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS / Linux**
 
 ```bash
+python3 -m venv .venv
+
 source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
 python -m pip install -r requirements.txt
 ```
 
-### Step 4: Configure Environment Variables
+### 4. Configure Environment Variables
 
-Copy `.env.example` to `.env`.
+Copy the example file.
 
-**Windows PowerShell:**
+**Windows PowerShell**
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-**macOS/Linux:**
+**macOS / Linux**
 
 ```bash
 cp .env.example .env
 ```
 
-Update the placeholder values with your own credentials.
+Open `.env` and provide your own API keys.
 
-Never upload the actual `.env` file to GitHub.
+Do not share or commit this file.
 
 ---
 
-## 13. Running the Application
+## Running the Application
 
 ### Start the FastAPI Server
-
-**Windows PowerShell:**
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn main:app --reload
-```
-
-**macOS/Linux:**
 
 ```bash
 python -m uvicorn main:app --reload
@@ -527,169 +582,105 @@ The API will be available at:
 http://127.0.0.1:8000
 ```
 
-Interactive API documentation:
+### Interactive API Documentation
+
+Open:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
+Use Swagger UI to inspect and test the available endpoints.
+
 ### Verify OpenAI API Connection
 
-```powershell
-.\.venv\Scripts\python.exe check_openai_connection.py
+```bash
+python check_openai_connection.py
 ```
 
-This script sends a small live API request to verify OpenAI connectivity.
+This script checks whether the configured OpenAI API key can be used to make a successful API request.
 
-### Run AI Lead Qualification
+### Run Single Lead Qualification
 
-```powershell
-.\.venv\Scripts\python.exe qualify_lead.py
+```bash
+python qualify_lead.py
 ```
 
-The current qualification script uses a sample lead message and prints the AI-generated structured result.
+### Run Batch Qualification and CSV Export
 
-The AI integration uses the OpenAI model configured in the script.
-
-Live OpenAI requests require a valid API key and may incur API usage charges.
-
----
-
-## 14. Automated Testing
-
-The project uses Pytest to verify API functionality and Pydantic validation behavior.
-
-### Run All Tests
-
-**Windows PowerShell:**
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest -v
+```bash
+python run_batch_qualification.py
 ```
 
-### FastAPI Tests — `test_main.py`
+The batch demonstration sends a real request to the OpenAI API and creates a CSV output file.
 
-The FastAPI test suite covers eight scenarios:
-
-1. Health check.
-2. Valid lead submission.
-3. Missing required message.
-4. Invalid email.
-5. Missing API key.
-6. Incorrect API key.
-7. Upstream timeout after retries.
-8. Upstream HTTP 500 after retries.
-
-External API requests are mocked in relevant tests to avoid unnecessary network dependencies.
-
-### Pydantic Tests — `test_lead_schemas.py`
-
-The schema test suite covers five scenarios:
-
-1. Valid lead qualification data.
-2. Invalid service interest.
-3. Invalid urgency.
-4. Missing required field.
-5. Rejection of additional fields.
-
-### Latest Development Test Results
-
-| Test Suite | Passed | Failed |
-|---|---:|---:|
-| FastAPI tests | 8 | 0 |
-| Pydantic schema tests | 5 | 0 |
-| **Total** | **13** | **0** |
-
-**Latest verified result: 13 tests passed.**
-
-The automated test suite runs locally without requiring live OpenAI API requests.
+AI requests may incur API usage charges.
 
 ---
 
-## 15. Current Development Scope and Limitations
+## Automated Testing
 
-This project is under active development.
+The project uses pytest for automated testing.
 
-The following capabilities are not yet implemented:
+Run the complete test suite:
 
-- Database persistence.
-- Duplicate event protection and idempotency.
-- AI qualification integrated into the FastAPI `/leads` endpoint.
-- A dedicated AI qualification endpoint.
-- CRM integration.
-- n8n workflow integration.
-- Actual human approval and review interface.
-- Production deployment.
-- CI/CD automation.
-- Production-level monitoring.
-- Advanced retry strategies with exponential backoff.
+```bash
+python -m pytest -v
+```
 
-The AI qualification module currently operates independently of the FastAPI application.
+### Test Coverage
 
-The external company information lookup uses a predefined JSONPlaceholder demo endpoint rather than a real company enrichment service.
+| Test File | Coverage |
+|---|---|
+| `test_main.py` | API endpoints, authentication, validation, upstream failures |
+| `test_lead_schemas.py` | Pydantic validation, batch structure, duplicate IDs |
+| `test_qualify_leads.py` | Single and batch qualification, input validation, API errors, logging |
+| `test_export_leads.py` | CSV creation, data accuracy, Unicode, formula-injection mitigation |
 
----
+### Latest Verified Test Result
 
-## 16. Future Development Roadmap
+```text
+73 passed
+```
 
-### Phase 1 — Advanced AI Lead Qualification
+The complete test suite was also executed successfully in a fresh virtual environment using Python 3.14.6 and the pinned direct dependencies.
 
-- Test multiple lead messages.
-- Improve classification rules.
-- Evaluate low, medium, and high-intent leads.
-- Improve handling of unclear messages.
-- Implement human review conditions.
-- Add robust AI error handling.
-
-### Phase 2 — FastAPI and AI Integration
-
-- Connect AI qualification to the lead intake endpoint.
-- Create dedicated qualification endpoints.
-- Return consistent structured API responses.
-- Add automated integration tests.
-
-### Phase 3 — Workflow Automation
-
-- Integrate n8n.
-- Automate incoming lead processing.
-- Add email notifications.
-- Connect CRM systems.
-- Build end-to-end automation workflows.
-
-### Phase 4 — Data Management
-
-- Add database persistence.
-- Implement duplicate event protection.
-- Maintain lead processing status.
-- Add reliable retry and recovery mechanisms.
-
-### Phase 5 — Portfolio and Deployment
-
-- Create professional architecture diagrams.
-- Add real project screenshots and demonstrations.
-- Improve documentation.
-- Deploy the application.
-- Add CI/CD and production monitoring.
+External API and OpenAI behaviour is mocked in automated tests. Running the test suite does not require real OpenAI API requests or consume OpenAI API credits.
 
 ---
 
-## 17. Project Objective
+## Current Scope and Limitations
 
-The long-term objective is to develop a reliable, extensible, and portfolio-ready AI Lead Management and Qualification System.
+This project is a portfolio and learning implementation.
 
-The project focuses on practical capabilities in:
+The following limitations are intentional and should be considered before production use:
 
-- Backend API development.
-- Python application engineering.
-- Data validation.
-- API authentication.
-- External API integration.
-- AI model integration.
-- Structured AI outputs.
-- Workflow automation.
-- Automated testing.
-- Professional software documentation.
+- FastAPI lead intake and AI qualification are currently separate workflows.
+- The upstream company lookup uses a public demo API.
+- Lead information is not stored in a database.
+- The batch qualification workflow uses one regular Responses API request.
+- CSV files are stored locally.
+- Authentication uses a shared API key rather than a full user identity and authorization system.
+- There is no background job queue.
+- There is no production deployment or CI/CD configuration.
+- Production monitoring, rate limiting, and persistent audit storage are not implemented.
 
-The development process emphasizes hands-on implementation, practical problem-solving, and building solutions that can eventually be demonstrated in real-world freelancing and client projects.
+## Possible Next Improvements
 
-**Developer Note:** This project is continuously evolving as part of an AI Automation Engineering and Backend Development learning roadmap.
+1. Connect AI qualification directly to the FastAPI lead intake workflow.
+2. Add database persistence for incoming leads and qualification results.
+3. Integrate a real CRM system.
+4. Add background processing for larger workloads.
+5. Improve authentication, authorization, and rate limiting.
+6. Add deployment and CI/CD automation.
+7. Add persistent monitoring and operational reporting.
+
+---
+
+## Project Objective
+
+The objective of this project is to build a practical foundation in Python API development and AI automation.
+
+It combines request validation, API integration, structured AI output, batch processing, CSV export, error handling, and automated testing in one maintainable codebase.
+
+The current implementation is a working prototype that can be extended into a more complete lead management and automation system.
