@@ -1,7 +1,6 @@
 
-from qualify_lead import qualify_multiple_leads
 from export_leads import export_leads_to_csv
-
+from qualify_lead import qualify_multiple_leads
 
 # Three sample customer leads
 sample_leads = [

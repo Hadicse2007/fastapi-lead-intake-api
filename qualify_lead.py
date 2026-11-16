@@ -1,22 +1,21 @@
-import os
 import json
 import logging
+import os
 import time
 import uuid
 
 from dotenv import load_dotenv
 from openai import (
-    OpenAI,
-    APIError,
     APIConnectionError,
-    APITimeoutError,
+    APIError,
     APIStatusError,
+    APITimeoutError,
     AuthenticationError,
+    OpenAI,
     RateLimitError,
 )
 
-from lead_schemas import (LeadQualification, LeadQualificationBatch)
-
+from lead_schemas import LeadQualification, LeadQualificationBatch
 
 # Load environment variables
 load_dotenv(override=True)
@@ -147,7 +146,7 @@ def call_openai_parse(**kwargs):
             "An OpenAI API error occurred."
         ) from exc
 
-    except RuntimeError as exc:
+    except RuntimeError:
 
         log_openai_failure(
             request_id, "configuration_or_runtime_error",
