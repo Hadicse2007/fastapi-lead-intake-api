@@ -1,15 +1,12 @@
 
-import pytest
-
-import httpx2
-
 import json
-
 from types import SimpleNamespace
 
-import qualify_lead as qualification_module
+import httpx2
+import pytest
 
-from lead_schemas import (LeadQualification, LeadQualificationBatch)
+import qualify_lead as qualification_module
+from lead_schemas import LeadQualification, LeadQualificationBatch
 
 
 # Fake OpenAI Responses API
@@ -445,14 +442,12 @@ def test_failed_request_logging(monkeypatch, caplog):
     with caplog.at_level(
         "INFO",
         logger=qualification_module.__name__
-    ):
+    ), pytest.raises(RuntimeError):
 
-        with pytest.raises(RuntimeError):
-
-            qualification_module.call_openai_parse(
-                model="test-model",
-                input="Test message"
-            )
+        qualification_module.call_openai_parse(
+            model="test-model",
+            input="Test message"
+        )
 
     events = [
         json.loads(record.getMessage())

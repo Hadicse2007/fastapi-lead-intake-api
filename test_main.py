@@ -5,13 +5,13 @@ import os
 os.environ.setdefault("API_KEY", "test-secret-key")
 
 
+from unittest.mock import Mock, patch
+
+import requests
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
-import requests
 
-from main import app, APIkey, get_mock_company_info
-
+from main import APIkey, app, get_mock_company_info
 
 client = TestClient(app)
 

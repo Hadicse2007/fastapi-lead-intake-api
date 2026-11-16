@@ -1,14 +1,14 @@
 #create fast api, lead model, and health check endpoint
 
-from fastapi import FastAPI, HTTPException, Header
-from pydantic import BaseModel, EmailStr
-from dotenv import load_dotenv
-import os
-import logging
 import json
+import logging
+import os
 import uuid
-import requests
 
+import requests
+from dotenv import load_dotenv
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel, EmailStr
 
 # .env file load করে
 load_dotenv()

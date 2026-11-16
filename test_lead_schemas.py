@@ -1,8 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from lead_schemas import LeadQualification
-from lead_schemas import LeadQualificationBatch
+from lead_schemas import LeadQualification, LeadQualificationBatch
 
 
 def test_valid_lead_qualification():
